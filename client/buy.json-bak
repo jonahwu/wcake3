@@ -1,0 +1,13 @@
+{"buy":{"userid":"aaaabbbbccc",
+	"items":[
+		{"itemid":"itemaaaabbb", "item":"nb1400", "count":"2"}, 
+	        {"itemid":"item999333", "item":"nb993", "count":"1"}
+   	]
+}}
+
+
+{"buy":
+      {
+	      "userinfo": {"userid":"userid-aaabbb", "address":"Neihu}
+      }
+}

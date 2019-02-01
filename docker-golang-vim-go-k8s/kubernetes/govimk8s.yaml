@@ -1,0 +1,122 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: govimk8s
+spec:
+  serviceName: "govimk8s"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: govimk8s
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: govimk8s
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+
+    spec:
+      # soft antiaffinity for optimize placement
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - govimk8s
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: govimk8s
+        #image: 192.168.51.130:5000/uwebserverv6
+        #image: 172.16.155.136:5000/uwebserverv6
+        image: 172.16.155.136:5000/dockergolangvimgo:1.9.2-1
+        stdin: true
+        tty: true
+        securityContext:
+          privileged: true
+          capabilities:
+             add:
+               - NET_ADMIN
+        ports:
+          - containerPort: 8000
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+        - mountPath: /cache
+          name: cache-volume
+      restartPolicy: Always
+
+        #terminationGracePeriodSeconds: 10
+
+      serviceAccountName: kb
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime
+       - name: cache-volume
+         emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: govimk8s
+  labels:
+    app: govimk8s
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    #port is loadbalancer port
+    #targetport is container port
+    #nodePort is external accessing from any given k8s cluster ip
+    port: 8001
+    targetPort: 8000
+    nodePort: 31803
+  selector:
+    app: govimk8s
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kb
+  namespace: jj
+  labels:
+      kubernetes.io/cluster-service: "true"
+      addonmanager.kubernetes.io/mode: Reconcile
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system:kb
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+    addonmanager.kubernetes.io/mode: EnsureExists
+  name: system:kb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kb
+subjects:
+- kind: ServiceAccount
+  name: kb
+  namespace: jj
+---
