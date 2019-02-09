@@ -8,7 +8,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/labstack/echo"
 	"github.com/wcake/cmd/handler"
-	"github.com/wcake/go/jutils"
+	"github.com/wcake/pkg/jutils"
 	"go.etcd.io/etcd/clientv3"
 	"time"
 	//	"github.com/labstack/echo/middleware"

@@ -5,7 +5,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/labstack/echo"
 	"github.com/tidwall/gjson"
-	"github.com/wcake/go/jutils"
+	"github.com/wcake/pkg/jutils"
 	"go.etcd.io/etcd/clientv3"
 	"io/ioutil"
 	"net/http"
