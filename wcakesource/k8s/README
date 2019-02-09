@@ -1,0 +1,9 @@
+# that will generate a user kb in namspace jj
+# and with all permission 
+
+kubectl apply -f helloworld.yaml
+# that set serviceaccout as kb
+# it must be running on namespace jj
+
+replace your namespace jj to taiwannumberone
+and might replace kb to proxyagent

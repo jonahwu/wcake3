@@ -1,0 +1,138 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: goarch
+spec:
+  #serviceName: "goarch"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: goarch
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      # soft antiaffinity for optimize placement
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution: 
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - goarch
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: goarch
+        #image: 172.16.155.136:5000/emotibot-k8s/uwebserverv6
+        image: 172.16.155.136:5000/proxy_agent:db28485
+
+        #readinessProbe:
+        #  tcpSocket:
+        #    port: 8000
+        #  initialDelaySeconds: 20
+        #  periodSeconds: 5
+
+        stdin: true
+        securityContext:
+          privileged: true
+          capabilities:
+             add:
+               - NET_ADMIN
+        ports:
+          - containerPort: 8000
+        resources:
+          limits:
+            cpu: 0.3 
+            memory: 256Mi
+          requests:
+            cpu: 0.3
+            memory: 256Mi
+
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+        - mountPath: /var/log/web
+          name: loggerfile
+      serviceAccountName: goarchagent
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime 
+       - name: loggerfile
+         hostPath:
+           path: /var/log/containerlogger/web
+      #select node label if enable
+      #nodeSelector:
+      #  ebotrole: worker
+  minReadySeconds: 5
+  strategy:
+    # indicate which strategy we want for rolling update
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goarch
+  labels:
+    app: goarch
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    #port is loadbalancer port
+    #targetport is container port
+    #nodePort is external accessing from any given k8s cluster ip
+    port: 8001
+    targetPort: 8000
+    nodePort: 31803
+  selector:
+    app: goarch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: goarchagent
+  namespace: jj
+  labels:
+      kubernetes.io/cluster-service: "true"
+      addonmanager.kubernetes.io/mode: Reconcile
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system:goarchagent
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+    addonmanager.kubernetes.io/mode: EnsureExists
+  name: system:goarchagent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:goarchagent
+subjects:
+- kind: ServiceAccount
+  name: goarchagent
+  namespace: jj
+---
