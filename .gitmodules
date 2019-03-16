@@ -2,3 +2,6 @@
 	path = k8sinstance
 	url = https://github.com/jonahwu/k8sinstance.git
 	branch = master
+[submodule "k8soperator-monitoring"]
+	path = k8soperator-monitoring
+	url = https://github.com/jonahwu/k8soperator-monitoring
