@@ -1,4 +1,4 @@
-
+#
 # Runing ETCD
 export NODE1=192.168.1.21
 Configure a Docker volume to store etcd data:
